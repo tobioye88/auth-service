@@ -72,7 +72,7 @@ public class OauthClientDetailsService implements ClientDetailsService, ClientRe
             oauthClientDetails = oauthClientDetailsRepository.findAll();
             return new ArrayList<>(oauthClientDetails);
         }catch (Exception e){
-            logger.warning("Error geting list of Clients");
+            logger.warning("Error getting list of Clients");
         }
         return new ArrayList<>();
     }

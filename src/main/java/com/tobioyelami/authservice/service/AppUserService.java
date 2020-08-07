@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.querydsl.QPageRequest;
 import org.springframework.data.querydsl.QSort;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 
 @Service
-public class AppUserService {
+public class AppUserService implements UserDetailsService {
 
     @Autowired
     private AppUserRepository repository;
@@ -67,5 +70,10 @@ public class AppUserService {
     public AppUser addAuthoritiesToUser(AppUser user, List<AppAuthority> appAuthorities){
         user.setAuthorities(new HashSet<>(appAuthorities));
         return repository.save(user);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return getUserByUsername(username);
     }
 }

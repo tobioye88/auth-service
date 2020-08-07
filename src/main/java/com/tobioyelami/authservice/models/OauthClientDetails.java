@@ -1,32 +1,59 @@
 package com.tobioyelami.authservice.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.provider.ClientDetails;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OauthClientDetails implements ClientDetails {
 
+    private static final long serialVersionUID = -2287510725041851818L;
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @JsonIgnore
     private Long id;
+
+    @NotNull
+    @Column(name = "client_name")
     private String clientName;
+
+    @NotNull
+    @Column(name = "client_id")
     private String clientId;
+
+    @NotNull
+    @Column(name = "client_secret")
     private String clientSecret;
+
     private String scope = "profile";
-    private String resourceIds;
+
+    @NotNull
+    @Column(name = "resource_ids")
+    private String resourceIds;    // comma separated list of accessible resource server ids
+
+    @Column(name = "authorized_grant_types")
     private String authorizedGrantTypes = "implicit,client_credentials,password";
+
+    @Column(name = "web_server_redirect_uri")
     private String webServerRedirectUris;
+
+    @Column(name = "autoapprove")
     private String autoApproveScopes;
+
     private String authorities;
-    private Integer accessTokenValiditySeconds = 86400;
+
+    @Column(name = "access_token_validity")
+    private Integer accessTokenValiditySeconds = 86400 * 30;    // 1 month token validity
+
+    @Column(name = "refresh_token_validity")
     private Integer refreshTokenValiditySeconds;
 
 
@@ -38,32 +65,129 @@ public class OauthClientDetails implements ClientDetails {
         this.id = id;
     }
 
-    public String getClientName() {
-        return clientName;
-    }
-
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
+    @Override
+    public String getClientId() {
+        return this.clientId;
     }
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
     }
 
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
+    @Override
+    public Set<String> getResourceIds() {
+        return new HashSet<>(Arrays.asList(this.resourceIds.split(",")));
     }
 
     public void setResourceIds(String resourceIds) {
         this.resourceIds = resourceIds;
     }
 
+    @Override
+    public boolean isSecretRequired() {
+        return this.clientSecret != null;
+    }
+
+    @Override
+    public String getClientSecret() {
+        return this.clientSecret;
+    }
+
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
+    @Override
+    public boolean isScoped() {
+        return this.scope != null && !this.scope.isEmpty();
+    }
+
+    @Override
+    public Set<String> getScope() {
+        return new HashSet<>(Arrays.asList(this.scope.split(",")));
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    @Override
+    public Set<String> getAuthorizedGrantTypes() {
+        return new HashSet<>(Arrays.asList(this.authorizedGrantTypes.split(",")));
+    }
+
     public void setAuthorizedGrantTypes(String authorizedGrantTypes) {
         this.authorizedGrantTypes = authorizedGrantTypes;
+    }
+
+    @Override
+    public Set<String> getRegisteredRedirectUri() {
+        return new HashSet<>(Arrays.asList(this.webServerRedirectUris.split(",")));
+    }
+
+    @Override
+    public Collection<GrantedAuthority> getAuthorities() {
+        String[] auths = this.authorities.split(",");
+        List<SimpleGrantedAuthority> gAuths = new ArrayList<>();
+        for (String authority : auths) {
+            gAuths.add(new SimpleGrantedAuthority(authority));
+        }
+        return new ArrayList<>(gAuths);
+
+    }
+
+    public String getAuthorizedGrantTypesAsString() {
+        return this.authorizedGrantTypes;
+    }
+
+    public String getResourceIdsAsString() {
+        return this.resourceIds;
+    }
+
+
+    public String getAuthoritiesAsString() {
+        return this.authorities;
+    }
+
+    public void setAuthorities(String authorities) {
+        this.authorities = authorities;
+    }
+
+    @Override
+    public Integer getAccessTokenValiditySeconds() {
+        return this.accessTokenValiditySeconds;
+    }
+
+    public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
+        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
+    }
+
+    @Override
+    public Integer getRefreshTokenValiditySeconds() {
+        return this.refreshTokenValiditySeconds;
+    }
+
+    public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
+        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
+    }
+
+    @Override
+    public boolean isAutoApprove(String scope) {
+        return false;
+    }
+
+    @Override
+    public Map<String, Object> getAdditionalInformation() {
+        return null;
+    }
+
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 
     public String getWebServerRedirectUris() {
@@ -82,85 +206,27 @@ public class OauthClientDetails implements ClientDetails {
         this.autoApproveScopes = autoApproveScopes;
     }
 
-    public void setAuthorities(String authorities) {
-        this.authorities = authorities;
-    }
-
-    public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
-        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-    }
-
-    public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
-        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
-    }
-
     @Override
-    public String getClientId() {
-        return this.clientId;
+    public String toString() {
+        return "OauthClientDetails{" +
+                "id=" + id +
+                ", clientName='" + clientName + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", clientSecret='" + clientSecret + '\'' +
+                ", scope='" + scope + '\'' +
+                ", resourceIds='" + resourceIds + '\'' +
+                ", authorizedGrantTypes='" + authorizedGrantTypes + '\'' +
+                ", webServerRedirectUris='" + webServerRedirectUris + '\'' +
+                ", autoApproveScopes='" + autoApproveScopes + '\'' +
+                ", authorities='" + authorities + '\'' +
+                ", accessTokenValiditySeconds=" + accessTokenValiditySeconds +
+                ", refreshTokenValiditySeconds=" + refreshTokenValiditySeconds +
+                '}';
     }
 
-    @Override
-    public Set<String> getResourceIds() {
-        return new HashSet<>(Arrays.asList(this.resourceIds.split(",")));
-    }
 
-    @Override
-    public boolean isSecretRequired() {
-        return this.clientSecret != null;
-    }
-
-    @Override
-    public String getClientSecret() {
-        return this.clientSecret;
-    }
-
-    @Override
-    public boolean isScoped() {
-        return this.scope != null && !this.scope.isEmpty();
-    }
-
-    @Override
-    public Set<String> getScope() {
-        return new HashSet<>(Arrays.asList(this.scope.split(",")));
-    }
-
-    @Override
-    public Set<String> getAuthorizedGrantTypes() {
-        return new HashSet<>(Arrays.asList(this.authorizedGrantTypes.split(",")));
-    }
-
-    @Override
-    public Set<String> getRegisteredRedirectUri() {
-        return new HashSet<>(Arrays.asList(this.webServerRedirectUris.split(",")));
-    }
-
-    @Override
-    public Collection<GrantedAuthority> getAuthorities() {
-        String[] auths = this.authorities.split(",");
-        List<SimpleGrantedAuthority> gAuth = new ArrayList<>();
-        for(String auth : auths){
-            gAuth.add(new SimpleGrantedAuthority(auth));
-        }
-        return new ArrayList<>(gAuth);
-    }
-
-    @Override
-    public Integer getAccessTokenValiditySeconds() {
-        return null;
-    }
-
-    @Override
-    public Integer getRefreshTokenValiditySeconds() {
-        return null;
-    }
-
-    @Override
-    public boolean isAutoApprove(String s) {
-        return false;
-    }
-
-    @Override
-    public Map<String, Object> getAdditionalInformation() {
-        return null;
+    public String getScopeAsString() {
+        return this.scope;
     }
 }
+

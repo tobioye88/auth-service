@@ -3,6 +3,7 @@ package com.tobioyelami.authservice.models;
 import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -13,7 +14,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "users")
-public class AppUser implements Serializable {
+public class AppUser implements UserDetails, Serializable {
 
     @Id
     @GeneratedValue
@@ -106,5 +107,26 @@ public class AppUser implements Serializable {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isActive;
     }
 }
